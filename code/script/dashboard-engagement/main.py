@@ -39,7 +39,7 @@ modal1 = html.Div(
 
 app.layout = html.Div([
     html.P(id="paragraph_1", children=["Engagement"]),
-    html.P(id="paragraph_2", children=["Emotion"]),
+    
     html.Div(modal1),
     dcc.Dropdown(
                 participants_list,
@@ -48,6 +48,8 @@ app.layout = html.Div([
     ),
     html.Button(id="button_id", children="Run Job!", n_clicks=1),
     html.Button(id="cancel_button_id", children="Cancel Running Job!", n_clicks=0),
+    html.Div(children=[
+    html.Div(children=[
     daq.Gauge(
         color={"gradient":True,"ranges":{"red":[0,60],"green":[60,100]}},
         showCurrentValue=True,
@@ -57,23 +59,48 @@ app.layout = html.Div([
         max=100,
         value=50,
     ),
-
-    daq.Thermometer( 
-        id ='my-indicator-1', 
-        label="Emotion Meter", 
-        value=0,
-        height=150,
-        width=50,
-        max=5, 
-        min=0, 
-        scale={'custom': {
-            '1':'Happy','2': 'Angry',
-            '3': 'Sad','4': 'Calm',
-            }},
-        showCurrentValue=False,  
-        color='black',
+    ], style={'display': 'inline-block', 'vertical-align': 'top', 'margin-left': '3vw', 'margin-top': '3vw'}
     ),
 
+    html.Div(children=[
+    html.P(id="paragraph_2", children=["Emotion"]),
+    html.Img(id='image',src=app.get_asset_url('happy.jpg'))
+    # daq.Indicator(
+    #     id='happy-indicator',
+    #     label="Happy",
+    #     width=60,
+    #     height=60,
+    #     value=False,
+    #     color="green"
+    # ),
+    # daq.Indicator(
+    #     id='sad-indicator',
+    #     label="Sad",
+    #     width=60,
+    #     height=60,
+    #     value=False,
+    #     color="yellow"
+    # ),
+    # daq.Indicator(
+    #     id='angry-indicator',
+    #     label="Angry",
+    #     width=60,
+    #     height=60,
+    #     value=False,
+    #     color="red"
+    # ),
+    # daq.Indicator(
+    #     id='calm-indicator',
+    #     label="Calm",
+    #     width=60,
+    #     height=60,
+    #     value=False,
+    #     color="blue"
+    # )],style={'display': 'inline-block', 'vertical-align': 'top', 'margin-left': '3vw', 'margin-top': '3vw'}),
+
+    ],style={'display': 'inline-block', 'vertical-align': 'top', 'margin-left': '3vw', 'margin-top': '3vw'}
+    )
+])
 ])
 
 
@@ -88,8 +115,12 @@ app.layout = html.Div([
     ],
     cancel=[Input("cancel_button_id", "n_clicks")],
     progress=[Output('my-gauge-1', 'value'),
-    Output('my-indicator-1', 'color'),
-    Output('my-indicator-1', 'value'),],
+    # Output('happy-indicator', 'value'),
+    # Output('sad-indicator', 'value'),
+    # Output('angry-indicator', 'value'),
+    # Output('calm-indicator', 'value'),
+    Output('image', 'src'),
+    ],
     manager=long_callback_manager,)
 
 def detect_engagement(set_progress,part,runjob):
@@ -117,6 +148,7 @@ def detect_engagement(set_progress,part,runjob):
         labels = np.argmax(preds,axis=1)
         res = np.max(preds, axis = 1) 
         print("res predicted")
+        #path = "F:\TUK\SoSe22\HIWI\dash_display"
  
         for i,l,aro,val in zip(res,labels,aro_labels,val_labels):
             time.sleep(1)
@@ -124,66 +156,27 @@ def detect_engagement(set_progress,part,runjob):
             if l==0:
                 i=1-i
             if val==1 and aro==1:
-                color = 'red'
-                value = 1
+                path = 'happy.jpg'
+                # H = True
+                # A = S = C = False
             elif val==0 and aro==1:
-                color = 'blue'
-                value = 2
-            elif val==1 and aro==0:
-                color = 'green'
-                value = 3
+                path = 'angry.jpg'
+                # A = True
+                # H = S = C = False
+            elif val==0 and aro==0:
+                path = 'sad.jpg'
+                # S = True
+                # H = A = C = False
             else:
-                color = 'yellow'
-                value = 4 
-            print(aro,val,color)
-            set_progress((i*100,color,value))
+                path = 'calm.jpg'
+                # C = True
+                # H = S = A = False
+            print(val,aro)
+            set_progress((i*100,app.get_asset_url(path)))
         return [part+"Engagement Completed, Select next Participant"]
     #time.sleep(2.0)
     #
     
-# @app.long_callback(Output("paragraph_2", "children"),
-#     Input('xaxis-column', 'value'),
-#     Input("button_id", "n_clicks"),
-#     running=[
-#         (Output("button_id", "disabled"), True, False),
-#         (Output("cancel_button_id", "disabled"), False, True),
-#     ],
-#     cancel=[Input("cancel_button_id", "n_clicks")],
-#     progress=Output('my-indicator-1', 'color'),
-#     manager=long_callback_manager,)
-
-# def detect_emotion(set_progress,part,runjob):
-#     print(runjob)
-#     if runjob == 1:
-#         print(part)
-#         df = emo.read_data(part)
-#         print("data read")
-#         #print(df.head())
-#         x_val, y_val = emo.prepare_data(df)
-#         print("data prepared")
-#         #print(x_val[0])
-
-#         model2 = load_model('best_val_model.h5')
-#         model3 = load_model('best_aro_model.h5')
-#         print("models loaded")
-#         val_preds = model2.predict(x_val)
-#         aro_preds = model3.predict(x_val)
-#         print("res predicted")
-#         val_labels = np.argmax(val_preds,axis=1)
-#         aro_labels = np.argmax(val_preds,axis=1)
-#         #res = np.max(preds, axis = 1)  
-#         for val,aro in zip(val_labels,aro_labels):
-#             time.sleep(1)
-#             print(val,aro)
-#             if val==1 and aro==1:
-#                 set_progress('#DFFF00')
-#             elif val==0 and aro==1:
-#                 set_progress('#DE3163')
-#             elif val==1 and aro==0:
-#                 set_progress('#6495ED')
-#             else:
-#                 set_progress('#9FE2BF')
-#         return [part+"Emotion Completed, Select next Participant"]
 
 
 @app.callback(
